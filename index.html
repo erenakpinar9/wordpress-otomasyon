@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordPress Blog Giriş Otomasyonu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root {
+    --bg:         #f5f5f3;
+    --surface:    #ffffff;
+    --surface2:   #f0f0ee;
+    --surface3:   #e8e8e6;
+    --border:     #d8d8d6;
+    --border2:    #c4c4c2;
+    --accent:     #111111;
+    --accent2:    #333333;
+    --accent-dim: rgba(17,17,17,0.07);
+    --text:       #0a0a0a;
+    --text2:      #3a3a3a;
+    --text3:      #6b6b6b;
+    --red:        #dc2626;
+    --red-dim:    rgba(220,38,38,0.08);
+    --green:      #16a34a;
+    --orange:     #f97316;
+    --radius:     8px;
+    --radius-lg:  12px;
+  }
+
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 52px 20px 80px;
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 44px; }
+  .header-eyebrow {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 36px; font-weight: 700;
+    letter-spacing: -.025em; color: var(--text);
+    line-height: 1.15; margin-bottom: 10px;
+  }
+  .header p { font-size: 14px; color: var(--text3); }
+
+  /* Steps */
+  .steps { display:flex; align-items:center; margin-bottom:32px; }
+  .step { display:flex; align-items:center; gap:8px; }
+  .step-dot {
+    width:24px; height:24px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; flex-shrink:0; transition:all .2s;
+  }
+  .step-dot.active   { background:var(--text); color:#fff; }
+  .step-dot.done     { background:var(--surface3); color:var(--green); border:1.5px solid var(--border2); }
+  .step-dot.inactive { background:var(--surface); color:var(--text3); border:1.5px solid var(--border); }
+  .step-label { font-size:12px; font-weight:500; white-space:nowrap; }
+  .step-label.active   { color:var(--text); }
+  .step-label.done     { color:var(--text3); }
+  .step-label.inactive { color:var(--text3); }
+  .step-line { flex:1; height:1px; background:var(--border); margin:0 10px; min-width:20px; }
+
+  /* Screens */
+  .screen { animation:fadeIn .2s ease; }
+  .hidden { display:none !important; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+
+  /* Cards */
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:20px 22px;
+    margin-bottom:10px;
+  }
+  .card-title {
+    font-size:11px; font-weight:600;
+    letter-spacing:.07em; text-transform:uppercase;
+    color:var(--text3); margin-bottom:14px;
+  }
+
+  /* Inputs */
+  .input {
+    width:100%; background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:9px 12px; font-size:13px;
+    font-family:inherit; color:var(--text);
+    outline:none; transition:border-color .15s; appearance:none;
+  }
+  .input:focus { border-color:var(--text); }
+  .input::placeholder { color:var(--text3); }
+
+  .textarea {
+    width:100%; background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:10px 12px; font-size:13px;
+    font-family:inherit; color:var(--text);
+    outline:none; resize:vertical; min-height:90px;
+    line-height:1.6; transition:border-color .15s;
+  }
+  .textarea:focus { border-color:var(--text); }
+
+  .label {
+    font-size:11px; font-weight:500;
+    color:var(--text3); letter-spacing:.04em;
+    text-transform:uppercase; margin-bottom:6px; display:block;
+  }
+
+  /* Buttons */
+  .btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:9px 16px; border-radius:var(--radius);
+    font-size:13px; font-weight:600; font-family:inherit;
+    cursor:pointer; border:none; outline:none;
+    transition:all .15s; white-space:nowrap; text-decoration:none;
+  }
+  .btn-primary { background:var(--text); color:#fff; }
+  .btn-primary:hover { background:var(--accent2); }
+
+  .btn-ghost {
+    background:var(--surface); color:var(--text2);
+    border:1px solid var(--border);
+  }
+  .btn-ghost:hover { background:var(--surface2); color:var(--text); }
+
+  .btn-wp { background:var(--text); color:#fff; padding:10px 18px; }
+  .btn-wp:hover { background:var(--accent2); }
+
+  .btn-danger {
+    background:var(--red-dim); color:var(--red);
+    border:1px solid rgba(220,38,38,.15);
+    font-size:11px; padding:4px 8px;
+  }
+  .btn-danger:hover { background:rgba(220,38,38,.14); }
+
+  .btn-sm { padding:6px 11px; font-size:11px; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  /* Info box */
+  .info-box {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:10px 13px;
+    font-size:12px; color:var(--text3); line-height:1.6; margin-top:10px;
+  }
+  .info-box a { color:var(--text); text-decoration:underline; text-underline-offset:2px; }
+
+  /* Tags */
+  .tag {
+    display:inline-flex; align-items:center;
+    padding:3px 10px; border-radius:99px;
+    font-size:11px; font-weight:500;
+    background:var(--surface2); color:var(--text2);
+    border:1px solid var(--border);
+  }
+  .tag-ok  { background:rgba(22,163,74,.07); color:#166534; border-color:rgba(22,163,74,.18); }
+  .tag-err { background:var(--red-dim); color:var(--red); border-color:rgba(220,38,38,.2); }
+  .tag-wp  { background:var(--surface2); color:var(--text2); border-color:var(--border); }
+
+  /* Grid */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .span2 { grid-column:1/-1; }
+  .row { display:flex; align-items:flex-end; gap:10px; }
+  .row-between { display:flex; align-items:center; justify-content:space-between; }
+
+  /* Password */
+  .pw-wrap { position:relative; }
+  .pw-toggle {
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:var(--surface2); border:1px solid var(--border); border-radius:5px;
+    cursor:pointer; font-size:10px; font-weight:600; color:var(--text3);
+    letter-spacing:.05em; padding:3px 7px;
+  }
+  .pw-toggle:hover { color:var(--text); background:var(--surface3); }
+  .pw-wrap .input { padding-right: 60px; }
+
+  /* Error */
+  .err-text { color:var(--red); font-size:12px; margin-top:8px; }
+
+  /* Dropzone */
+  .dropzone {
+    border:1.5px dashed var(--border2); border-radius:var(--radius-lg);
+    padding:36px 20px; text-align:center; cursor:pointer; transition:all .2s;
+  }
+  .dropzone:hover, .dropzone.over { border-color:var(--text); background:var(--surface2); }
+  .dropzone-icon { margin-bottom:12px; }
+  .dropzone-icon svg { stroke:var(--text3); }
+  .dropzone-text { font-size:14px; color:var(--text2); margin-bottom:4px; }
+  .dropzone-text span { color:var(--text); font-weight:600; text-decoration:underline; text-underline-offset:2px; }
+  .dropzone-sub { font-size:12px; color:var(--text3); }
+
+  /* File list */
+  .file-list { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .file-item {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:8px 12px;
+    font-size:12px; color:var(--text2);
+  }
+  .file-item-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-item-size { color:var(--text3); flex-shrink:0; }
+
+  /* Result cards */
+  .result-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:20px 22px;
+    margin-bottom:10px; transition:border-color .2s;
+    animation:fadeIn .25s ease;
+  }
+  .result-card.published { border-color:rgba(22,163,74,.3); }
+
+  /* Spinner */
+  .spin { animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Progress */
+  .progress-wrap { background:var(--surface2); border-radius:99px; height:4px; overflow:hidden; }
+  .progress-bar { height:100%; background:var(--text); border-radius:99px; transition:width .4s; }
+
+  /* Summary bar */
+  .summary-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:14px 18px; margin-bottom:14px;
+    flex-wrap:wrap; gap:10px;
+  }
+  .summary-count { font-size:13px; color:var(--text2); }
+  .summary-count strong { color:var(--text); }
+
+  /* Mode toggle */
+  .mode-toggle { display:flex; gap:8px; }
+  .mode-btn {
+    flex:1; padding:12px 16px; border-radius:var(--radius);
+    border:1px solid var(--border); background:var(--surface2);
+    font-size:13px; font-weight:500; color:var(--text2);
+    cursor:pointer; transition:all .18s; text-align:center; font-family:inherit;
+  }
+  .mode-btn.active { border-color:var(--text); background:var(--surface); color:var(--text); }
+  .mode-btn:hover:not(.active) { background:var(--surface3); color:var(--text); }
+
+  /* Lang tabs */
+  .lang-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .lang-tab-btn {
+    padding:8px 14px; font-size:12px; font-weight:500; color:var(--text3);
+    cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+    transition:all .15s; white-space:nowrap; font-family:inherit;
+    background:none; border-top:none; border-left:none; border-right:none;
+  }
+  .lang-tab-btn.active { color:var(--text); border-bottom-color:var(--text); }
+  .lang-tab-btn:hover:not(.active) { color:var(--text2); }
+  .lang-tab-pane { display:none; }
+  .lang-tab-pane.active { display:block; }
+
+  /* Mini drop */
+  .mini-drop {
+    display:flex; align-items:center; gap:10px; padding:10px 14px;
+    background:var(--surface2); border:1.5px dashed var(--border2);
+    border-radius:var(--radius); cursor:pointer; transition:border .2s;
+    font-size:12px; color:var(--text3);
+  }
+  .mini-drop:hover { border-color:var(--text); }
+  .mini-drop.has-file { background:var(--surface2); border-style:solid; border-color:var(--border); color:var(--text2); }
+
+  /* Pub progress */
+  .pub-progress {
+    display:none; background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:12px 14px; margin-bottom:14px;
+  }
+  .pub-progress-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .pub-progress-icon { flex-shrink:0; line-height:1; }
+  .pub-progress-msg  { flex:1; font-size:13px; font-weight:500; color:var(--text2); }
+  .pub-progress-step { font-size:11px; color:var(--text3); white-space:nowrap; }
+  .pub-progress-track { height:3px; background:var(--border); border-radius:99px; overflow:hidden; }
+  .pub-progress-fill { height:100%; background:var(--text); border-radius:99px; transition:width .4s; width:0%; }
+  .pub-progress.done  { border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.05); }
+  .pub-progress.error { border-color:rgba(220,38,38,.25); background:rgba(220,38,38,.05); }
+  .pub-progress.done  .pub-progress-fill { background:var(--green); }
+  .pub-progress.error .pub-progress-fill { background:var(--red); }
+
+  /* Welcome */
+  .welcome-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+  .welcome-mode-card {
+    border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px 18px;
+    cursor:pointer; transition:all .2s; background:var(--surface2);
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .welcome-mode-card:hover { border-color:var(--text); background:var(--surface); }
+  .welcome-mode-card.selected { border-color:var(--text); background:var(--surface); box-shadow:0 0 0 1px var(--text); }
+  .welcome-mode-card .wmc-icon {
+    width:38px; height:38px; border-radius:9px;
+    background:var(--surface3); display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--border);
+  }
+  .welcome-mode-card.selected .wmc-icon { background:var(--text); border-color:var(--text); }
+  .welcome-mode-card .wmc-icon svg { stroke:var(--text2); }
+  .welcome-mode-card.selected .wmc-icon svg { stroke:#fff; }
+  .welcome-mode-card .wmc-title { font-size:14px; font-weight:600; color:var(--text); }
+  .welcome-mode-card .wmc-desc { font-size:13px; color:var(--text3); line-height:1.6; }
+  .welcome-mode-card .wmc-features { display:flex; flex-direction:column; gap:5px; margin-top:2px; }
+  .welcome-mode-card .wmc-feature { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text3); }
+  .welcome-mode-card .wmc-feature svg { stroke:var(--text3); flex-shrink:0; }
+  .welcome-mode-card.selected .wmc-feature { color:var(--text2); }
+  .welcome-mode-card.selected .wmc-feature svg { stroke:var(--text); }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:99px; }
+
+  @media (min-width:601px) {
+    body.on-welcome { overflow:hidden; height:100vh; }
+    body.on-welcome .wrap { height:100vh; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding-top:0; padding-bottom:0; }
+  }
+
+  @media (max-width:600px) {
+    .grid2 { grid-template-columns:1fr; }
+    .span2 { grid-column:1; }
+    .header h1 { font-size:26px; }
+    .row { flex-direction:column; align-items:stretch; }
+    .welcome-grid { grid-template-columns:1fr; }
+    .mode-toggle { flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">WordPress</div>
+    <h1>Blog Giriş Otomasyonu</h1>
+    <p>Dosya yükle · AI ile çevir · Zamanla & yayınla</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-dot active" id="dot0">1</div>
+      <span class="step-label active" id="lbl0">Başlangıç</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-dot inactive" id="dot1">2</div>
+      <span class="step-label inactive" id="lbl1">Ayarlar</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-dot inactive" id="dot2">3</div>
+      <span class="step-label inactive" id="lbl2">Kontrol Et</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-dot inactive" id="dot3">4</div>
+      <span class="step-label inactive" id="lbl3">Yayınla</span>
+    </div>
+  </div>
+
+  <!-- SCREEN -1: Welcome / Mod Seçimi -->
+  <div id="screenWelcome" class="screen">
+    <div class="card">
+      <div class="card-title" style="font-size:15px;margin-bottom:6px">Nasıl çalışmak istersiniz?</div>
+      <p style="font-size:13px;color:var(--text3);margin:0 0 20px">İçerik yükleme yöntemini seçin, ardından proje ayarlarınıza geçin.</p>
+
+      <div class="welcome-grid">
+        <!-- Otomatik Çeviri -->
+        <div class="welcome-mode-card" id="welcomeAutoCard" onclick="selectWelcomeMode('auto')">
+          <div class="wmc-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </div>
+          <div class="wmc-title">Otomatik Çeviri</div>
+          <div class="wmc-desc">Türkçe DOCX yükleyin, Azure AI ile tüm dillere otomatik çevirin ve WordPress'e yayınlayın.</div>
+          <div class="wmc-features">
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Tek DOCX yükle, tüm diller otomatik
+            </div>
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Azure Translator ile yüksek kalite çeviri
+            </div>
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              H2/H3 başlık yapısı korunur
+            </div>
+          </div>
+        </div>
+
+        <!-- Manuel Yükleme -->
+        <div class="welcome-mode-card" id="welcomeManualCard" onclick="selectWelcomeMode('manual')">
+          <div class="wmc-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div class="wmc-title">Manuel Yükleme</div>
+          <div class="wmc-desc">Her dil için ayrı DOCX dosyası yükleyin. Tüm çeviriler hazır olduğunda bu yöntemi kullanın.</div>
+          <div class="wmc-features">
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Her dil için ayrı dosya yükle
+            </div>
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Çeviriler üzerinde tam kontrol
+            </div>
+            <div class="wmc-feature">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Azure API key gerekmez
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-top:24px">
+        <button class="btn btn-primary" id="welcomeDevamBtn" onclick="goFromWelcome()" disabled style="opacity:.35;cursor:not-allowed">
+          Devam Et
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 0: Settings & Files -->
+  <div id="screen0" class="screen hidden">
+
+    <!-- Proje Profilleri -->
+    <div class="card">
+      <div class="card-title">Proje</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="input" id="projectSelect" onchange="loadProject(this.value)" style="flex:1;cursor:pointer">
+          <option value="">Proje seçin</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="saveProject()" id="saveProjectBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Kaydet
+        </button>
+        <button class="btn btn-danger btn-sm" id="deleteProjectBtn" style="display:none" onclick="deleteProject()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Sil
+        </button>
+      </div>
+      <div class="info-box">
+        Yeni bir proje kaydetmek için bilgilerinizi girdikten sonra "Kaydet" butonuna basın.
+      </div>
+      <div id="projectMsg" style="font-size:11px;margin-top:6px;min-height:14px"></div>
+    </div>
+
+    <!-- Azure Translator Key (auto modda görünür) -->
+    <div class="card" id="apiKeyCard">
+      <div class="card-title">Azure Translator Anahtarı <span style="color:var(--text3);font-size:10px;letter-spacing:0">(yalnızca otomatik çeviri için)</span></div>
+      <div class="pw-wrap">
+        <input class="input" type="password" id="apiKey" placeholder="Azure Translator Key..." />
+        <button class="pw-toggle" onclick="toggleVis('apiKey',this)">GÖSTER</button>
+      </div>
+      <div class="info-box">
+        Çeviri kullanmıyorsanız boş bırakabilirsiniz. <a href="https://portal.azure.com" target="_blank">portal.azure.com</a> → Translator → Keys and Endpoint
+      </div>
+    </div>
+
+    <!-- WordPress -->
+    <div class="card">
+      <div class="card-title">WordPress Bağlantısı</div>
+      <div class="grid2">
+        <div class="span2">
+          <label class="label">Site URL</label>
+          <input class="input" type="url" id="wpUrl" placeholder="https://siteniz.com" />
+        </div>
+        <div>
+          <label class="label">Kullanıcı Adı</label>
+          <input class="input" type="text" id="wpUser" placeholder="admin" />
+        </div>
+        <div>
+          <label class="label">Uygulama Şifresi</label>
+          <div class="pw-wrap">
+            <input class="input" type="password" id="wpPass" placeholder="xxxx xxxx xxxx xxxx" style="padding-right:60px" />
+            <button class="pw-toggle" onclick="toggleVis('wpPass',this)">GÖSTER</button>
+          </div>
+        </div>
+      </div>
+      <div class="info-box" style="margin-top:12px">
+        WordPress Admin → Kullanıcılar → Profilin → <strong>Uygulama Şifreleri</strong> bölümünden oluşturabilirsiniz.
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="fetchCategories()" id="fetchCatBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-8.5"/></svg>
+          Kategorileri Getir
+        </button>
+        <span id="catStatus" style="font-size:11px;color:var(--text3)"></span>
+        <button class="btn btn-ghost btn-sm" onclick="fetchLanguages()" id="fetchLangBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Dilleri Getir
+        </button>
+        <span id="langStatus" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div id="catPreview" style="display:none;margin-top:8px;display:flex;flex-wrap:wrap;gap:5px"></div>
+      <div id="langPreview" style="display:none;margin-top:8px;display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+
+    <!-- Files (sadece auto modda) -->
+    <div class="card" id="autoOnlyCard">
+      <div class="card-title">Blog Dosyaları</div>
+      <div class="dropzone" id="dropzone"
+        onclick="document.getElementById('fileInput').click()"
+        ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt" style="display:none" onchange="handleFileSelect(event)" />
+        <div class="dropzone-icon">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dropzone-text">Sürükle bırak ya da <span>tıkla</span></div>
+        <div class="dropzone-sub">PDF · DOCX · TXT — birden fazla seçebilirsiniz</div>
+      </div>
+      <div id="fileError" class="err-text" style="display:none"></div>
+      <div id="fileList" class="file-list"></div>
+    </div>
+
+    <div class="card" id="autoOnlyKeyword" style="display:none"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <button class="btn btn-ghost" onclick="setStep(-1)">← Geri</button>
+      <button class="btn btn-primary" onclick="goToStep1()">
+        <span id="devamBtnText">Devam Et</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Kontrol Et -->
+  <div id="screen1" class="screen hidden">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:20px">Kontrol Et</div>
+
+      <!-- Dosyalar -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Dosyalar</div>
+        <div id="reviewFiles" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+
+      <!-- Kategori -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Kategori</div>
+        <div id="reviewCategory" style="font-size:13px;color:var(--text2)"></div>
+      </div>
+
+      <!-- Çeviri Dilleri -->
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Çeviri Dilleri</div>
+        <div id="reviewLanguages" style="font-size:13px;color:var(--text2)"></div>
+      </div>
+
+      <div id="genIdle" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="goBack()">← Geri</button>
+        <button class="btn btn-primary" onclick="startGeneration()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Onayla ve Devam Et
+        </button>
+      </div>
+      <div id="genProgress" style="display:none;width:100%;max-width:400px;margin-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          <span style="font-size:13px;color:var(--text2)" id="genStatus">İşleniyor...</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+        <div id="genLog" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Schedule & Publish -->
+  <div id="screen2" class="screen hidden">
+    <div class="summary-bar">
+      <div class="summary-stat">
+        <strong id="readyCount">0</strong> yazı hazır
+        <span class="pub" id="pubBadge" style="display:none"> · <strong id="pubCount">0</strong> yayınlandı</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="addManualCardBtn" style="display:none" onclick="addManualCard()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yeni Yazı Ekle
+        </button>
+        <button class="btn btn-ghost btn-sm" id="backToStep1Btn" onclick="setStep(1)" style="display:none">← Geri</button>
+        <button class="btn btn-ghost btn-sm" onclick="goBack2()">← Başa Dön</button>
+        <button class="btn btn-wp btn-sm" id="publishAllBtn" onclick="publishAll()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM3.6 12c0-1.196.261-2.33.724-3.352L8.35 20.124A8.412 8.412 0 0 1 3.6 12zm8.4 8.4a8.415 8.415 0 0 1-2.393-.348l2.54-7.383 2.603 7.128a.4.4 0 0 0 .03.057A8.394 8.394 0 0 1 12 20.4zm1.16-12.32c.506-.027.963-.08.963-.08.453-.054.4-.72-.054-.693 0 0-1.362.107-2.24.107-.826 0-2.215-.107-2.215-.107-.454-.027-.508.666-.054.693 0 0 .43.053.882.08l1.31 3.588-1.84 5.517-3.06-9.105c.507-.027.96-.08.96-.08.452-.054.399-.72-.055-.693 0 0-1.36.107-2.238.107-.158 0-.344-.004-.542-.01A8.4 8.4 0 0 1 12 3.6c2.204 0 4.216.845 5.717 2.225-.036-.002-.072-.006-.11-.006-.825 0-1.41.719-1.41 1.49 0 .693.4 1.278.826 1.971.32.56.694 1.278.694 2.317 0 .72-.276 1.556-.64 2.717l-.838 2.8-3.079-9.154zm3.502 10.538-.025-.048-2.551-7.025c.422-1.078.633-1.976.633-2.757 0-.283-.019-.547-.053-.794A8.402 8.402 0 0 1 20.4 12a8.41 8.41 0 0 1-3.738 7.018z"/></svg>
+          Tümünü Yayınla
+        </button>
+      </div>
+    </div>
+    <div id="resultsList"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────
+const state = {
+  files: [],
+  results: [],
+  published: {},
+  pubErrors: {},
+  categories: [],
+  languages: [],
+  defaultLang: 'tr',
+  mode: 'auto'  // 'auto' | 'manual'
+};
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── Step navigation ─────────────────────────────────────────
+function setStep(n) {
+  // screenWelcome = -1, screen0 = 0, screen1 = 1, screen2 = 2
+  document.body.classList.toggle('on-welcome', n === -1);
+  document.getElementById('screenWelcome').classList.toggle('hidden', n !== -1);
+  ['screen0','screen1','screen2'].forEach((id,i) => {
+    document.getElementById(id).classList.toggle('hidden', i !== n);
+  });
+  [0,1,2,3].forEach(i => {
+    const dot = document.getElementById('dot'+i);
+    const lbl = document.getElementById('lbl'+i);
+    // n=-1 → step 0 active; n=0 → step 1 active; n=1 → step 2 active; n=2 → step 3 active
+    const activeStep = n + 1;
+    dot.className = 'step-dot ' + (i === activeStep ? 'active' : i < activeStep ? 'done' : 'inactive');
+    lbl.className = 'step-label ' + (i === activeStep ? 'active' : i < activeStep ? 'done' : 'inactive');
+    if (i < activeStep) dot.innerHTML = '✓';
+    else dot.innerHTML = i + 1;
+  });
+}
+
+function selectWelcomeMode(mode) {
+  document.getElementById('welcomeAutoCard').classList.toggle('selected', mode === 'auto');
+  document.getElementById('welcomeManualCard').classList.toggle('selected', mode === 'manual');
+  const btn = document.getElementById('welcomeDevamBtn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor = 'pointer';
+  setMode(mode);
+}
+
+function goFromWelcome() {
+  if (!document.getElementById('welcomeAutoCard').classList.contains('selected') &&
+      !document.getElementById('welcomeManualCard').classList.contains('selected')) {
+    return;
+  }
+  setStep(0);
+}
+
+// ─── Proje Profilleri ─────────────────────────────────────────
+function loadProjects() {
+  try { return JSON.parse(localStorage.getItem('wp_projects') || '[]'); } catch { return []; }
+}
+
+function saveProjects(projects) {
+  localStorage.setItem('wp_projects', JSON.stringify(projects));
+}
+
+function renderProjectSelect(activeId = null) {
+  const projects = loadProjects();
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = `<option value="">Proje seçin</option>` +
+    projects.map(p => `<option value="${p.id}" ${p.id === activeId ? 'selected' : ''}>${escHtml(p.name)}</option>`).join('');
+  document.getElementById('deleteProjectBtn').style.display = activeId ? '' : 'none';
+}
+
+function loadProject(id) {
+  if (!id) { document.getElementById('deleteProjectBtn').style.display = 'none'; return; }
+  const p = loadProjects().find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('apiKey').value = p.apiKey || '';
+  document.getElementById('wpUrl').value  = p.wpUrl  || '';
+  document.getElementById('wpUser').value = p.wpUser || '';
+  document.getElementById('wpPass').value = p.wpPass || '';
+  document.getElementById('deleteProjectBtn').style.display = '';
+  showProjectMsg(`"${p.name}" yüklendi ✓`, 'var(--accent)');
+}
+
+function saveProject() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const wpUrl  = document.getElementById('wpUrl').value.trim();
+  const wpUser = document.getElementById('wpUser').value.trim();
+  const wpPass = document.getElementById('wpPass').value.trim();
+  if (!wpUrl) { showProjectMsg('Site URL boş olamaz', 'var(--red)'); return; }
+
+  const sel = document.getElementById('projectSelect');
+  const existingId = sel.value;
+  const projects = loadProjects();
+
+  if (existingId) {
+    const p = projects.find(x => x.id === existingId);
+    if (p) { p.apiKey = apiKey; p.wpUrl = wpUrl; p.wpUser = wpUser; p.wpPass = wpPass; }
+    saveProjects(projects);
+    renderProjectSelect(existingId);
+    showProjectMsg('Proje güncellendi ✓', 'var(--accent)');
+  } else {
+    const name = prompt('Proje adı:');
+    if (!name) return;
+    const id = 'proj_' + Date.now();
+    projects.push({ id, name, apiKey, wpUrl, wpUser, wpPass });
+    saveProjects(projects);
+    renderProjectSelect(id);
+    showProjectMsg(`"${name}" kaydedildi ✓`, 'var(--accent)');
+  }
+}
+
+function deleteProject() {
+  const id = document.getElementById('projectSelect').value;
+  if (!id) return;
+  const projects = loadProjects();
+  const p = projects.find(x => x.id === id);
+  if (!p || !confirm(`"${p.name}" silinsin mi?`)) return;
+  saveProjects(projects.filter(x => x.id !== id));
+  renderProjectSelect(null);
+  showProjectMsg('Proje silindi', 'var(--text3)');
+}
+
+function showProjectMsg(msg, color) {
+  const el = document.getElementById('projectMsg');
+  el.textContent = msg; el.style.color = color;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderProjectSelect();
+  setStep(-1);
+});
+
+function setMode(mode) {
+  state.mode = mode;
+  const autoCard = document.getElementById('autoOnlyCard');
+  const apiCard  = document.getElementById('apiKeyCard');
+  const kwCard   = document.getElementById('autoOnlyKeyword');
+  const btnText  = document.getElementById('devamBtnText');
+  if (autoCard) autoCard.style.display = mode === 'auto' ? '' : 'none';
+  if (apiCard)  apiCard.style.display  = mode === 'auto' ? '' : 'none';
+  if (kwCard)   kwCard.style.display   = 'none';
+  if (btnText)  btnText.textContent    = mode === 'manual' ? 'Yayın Ekranına Geç' : 'Devam Et';
+}
+
+function goToStep1() {
+  if (state.mode === 'auto') {
+    if (state.files.length === 0) { alert('En az bir dosya ekleyin.'); return; }
+
+    // Review ekranını doldur
+
+    // Dosya listesi
+    const reviewFiles = document.getElementById('reviewFiles');
+    reviewFiles.innerHTML = state.files.map((f, i) =>
+      `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+        <span style="background:var(--accent-dim);color:var(--accent2);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600">${i+1}</span>
+        ${escHtml(f.name)}
+      </div>`
+    ).join('');
+
+    // Kategori
+    const cat = state.categories.find(c => false); // per-card, henüz seçilmedi
+    document.getElementById('reviewCategory').innerHTML =
+      state.categories.length > 0
+        ? `<span style="color:var(--text3)">Her yazı için ayrı seçilecek</span>`
+        : `<span style="color:var(--text3)">Henüz yüklenmedi — <em>Kategorileri Getir</em> butonunu kullanın</span>`;
+
+    // Diller
+    document.getElementById('reviewLanguages').innerHTML =
+      state.languages.length > 1
+        ? state.languages.map(l => `<span class="tag tag-wp">${l.flag||''} ${escHtml(l.name)}</span>`).join(' ')
+        : `<span style="color:var(--text3)">Tek dil veya henüz yüklenmedi — çeviri yapılmayacak</span>`;
+
+    document.getElementById('genIdle').style.display = 'flex';
+    document.getElementById('genProgress').style.display = 'none';
+    setStep(1);
+  } else {
+    // Manuel mod: WP bilgileri zorunlu
+    const wpUrl  = document.getElementById('wpUrl').value.trim();
+    const wpUser = document.getElementById('wpUser').value.trim();
+    const wpPass = document.getElementById('wpPass').value.trim();
+    if (!wpUrl || !wpUser || !wpPass) { alert('Lütfen WordPress bağlantı bilgilerini girin.'); return; }
+
+    if (state.results.length === 0) addManualCard();
+    document.getElementById('addManualCardBtn').style.display = '';
+    const backBtn = document.getElementById('backToStep1Btn');
+    if (backBtn) backBtn.style.display = 'none';
+    renderResults();
+    setStep(2);
+  }
+}
+
+function goBack() { setStep(0); }
+function goBack2() {
+  // State sıfırla
+  state.results = []; state.published = {}; state.pubErrors = {};
+  state.categories = []; state.languages = []; state.defaultLang = 'tr';
+  state.mode = 'auto';
+
+  if (document.getElementById('addManualCardBtn')) {
+    document.getElementById('addManualCardBtn').style.display = 'none';
+  }
+
+  // Form alanlarını sıfırla
+  document.getElementById('apiKey').value = '';
+  document.getElementById('wpUrl').value = '';
+  document.getElementById('wpUser').value = '';
+  document.getElementById('wpPass').value = '';
+  document.getElementById('projectSelect').value = '';
+  document.getElementById('deleteProjectBtn').style.display = 'none';
+  document.getElementById('projectMsg').textContent = '';
+
+  // Kategori ve dil önizlemelerini temizle
+  const catPreview = document.getElementById('catPreview');
+  const langPreview = document.getElementById('langPreview');
+  if (catPreview) { catPreview.style.display = 'none'; catPreview.innerHTML = ''; }
+  if (langPreview) { langPreview.style.display = 'none'; langPreview.innerHTML = ''; }
+  const catStatus = document.getElementById('catStatus');
+  const langStatus = document.getElementById('langStatus');
+  if (catStatus) catStatus.textContent = '';
+  if (langStatus) langStatus.textContent = '';
+
+  // Dosya listesini sıfırla
+  state.files = [];
+  const fileList = document.getElementById('fileList');
+  const fileError = document.getElementById('fileError');
+  if (fileList) fileList.innerHTML = '';
+  if (fileError) fileError.style.display = 'none';
+
+  // Welcome kartlarını sıfırla
+  document.getElementById('welcomeAutoCard').classList.remove('selected');
+  document.getElementById('welcomeManualCard').classList.remove('selected');
+  const welcomeBtn = document.getElementById('welcomeDevamBtn');
+  if (welcomeBtn) { welcomeBtn.disabled = true; welcomeBtn.style.opacity = '.35'; welcomeBtn.style.cursor = 'not-allowed'; }
+  const devamText = document.getElementById('devamBtnText');
+  if (devamText) devamText.textContent = 'Devam Et';
+
+  // Modu auto'ya sıfırla (kartları doğru göster/gizle)
+  state.mode = 'auto';
+  const apiKeyCard = document.getElementById('apiKeyCard');
+  if (apiKeyCard) apiKeyCard.style.display = '';
+  const autoOnlyCard = document.getElementById('autoOnlyCard');
+  if (autoOnlyCard) autoOnlyCard.style.display = '';
+  const autoOnlyKeyword = document.getElementById('autoOnlyKeyword');
+  if (autoOnlyKeyword) autoOnlyKeyword.style.display = 'none';
+
+  setStep(-1);
+}
+
+// ─── File handling ────────────────────────────────────────────
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('over'); }
+function handleDragLeave() { document.getElementById('dropzone').classList.remove('over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('over');
+  addFiles(e.dataTransfer.files);
+}
+function handleFileSelect(e) { addFiles(e.target.files); }
+
+function addFiles(fileList) {
+  const valid = Array.from(fileList).filter(f => /\.(pdf|docx|txt)$/i.test(f.name));
+  const invalid = fileList.length - valid.length;
+  if (invalid > 0) showFileError('Sadece PDF, DOCX, TXT kabul edilir.');
+  valid.forEach(f => { if (!state.files.find(x => x.name === f.name)) state.files.push(f); });
+  renderFileList();
+}
+
+function removeFile(name) {
+  state.files = state.files.filter(f => f.name !== name);
+  renderFileList();
+}
+
+function showFileError(msg) {
+  const el = document.getElementById('fileError');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  el.innerHTML = state.files.map(f => `
+    <div class="file-item">
+      <div class="file-meta">
+        <span class="tag tag-ext">${f.name.split('.').pop().toUpperCase()}</span>
+        <span style="font-size:13px;color:var(--text)">${f.name}</span>
+        <span class="file-size">${(f.size/1024).toFixed(0)} KB</span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeFile('${f.name}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// ─── Text extraction ──────────────────────────────────────────
+async function extractText(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt') return { text: await file.text(), html: null };
+
+  if (ext === 'pdf') {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+    let text = '';
+    for (let i = 1; i <= Math.min(pdf.numPages, 15); i++) {
+      const page = await pdf.getPage(i);
+      const c = await page.getTextContent();
+      text += c.items.map(x => x.str).join(' ') + '\n';
+    }
+    return { text, html: null };
+  }
+
+  if (ext === 'docx') {
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+    const html = result.value;
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return { text, html };
+  }
+  throw new Error('Desteklenmeyen format.');
+}
+
+// ─── Generation ───────────────────────────────────────────────
+async function startGeneration() {
+  document.getElementById('genIdle').style.display = 'none';
+  document.getElementById('genProgress').style.display = 'block';
+
+  state.results = [];
+  const log = document.getElementById('genLog');
+
+  for (let i = 0; i < state.files.length; i++) {
+    const file = state.files[i];
+    const pct = Math.round((i / state.files.length) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('genStatus').textContent = file.name;
+
+    const logItem = document.createElement('div');
+    logItem.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)';
+    logItem.innerHTML = `<svg class="spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>${file.name}`;
+    log.appendChild(logItem);
+
+    try {
+      const { text, html } = await extractText(file);
+
+      // H1'i başlık olarak al, içerikten çıkar
+      let title = file.name.replace(/\.\w+$/, '');
+      let contentHtml = html;
+      if (html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const h1El = doc.querySelector('h1');
+        if (h1El) {
+          title = h1El.textContent.trim().slice(0, 200);
+          h1El.remove();
+          contentHtml = doc.body.innerHTML;
+        } else {
+          // H1 yoksa ilk satırı başlık al
+          title = text.split('\n').filter(l => l.trim())[0]?.slice(0, 120) || title;
+        }
+      }
+
+      state.results.push({ fileName: file.name, title, fullContent: text, fullContentHtml: contentHtml, scheduleDate: '', categoryIds: [], translationLangs: [], imageFile: null, imagePreview: null, status: 'ready' });
+      logItem.innerHTML = `<span style="color:var(--accent)">✓</span><span style="color:var(--text2)">${file.name}</span>`;
+    } catch(err) {
+      state.results.push({ fileName: file.name, title: file.name, fullContent: '', fullContentHtml: null, scheduleDate: '', categoryIds: [], translationLangs: [], imageFile: null, imagePreview: null, status: 'error', error: err.message });
+      logItem.innerHTML = `<span style="color:var(--red)">✗</span><span style="color:var(--red)">${file.name} — ${err.message}</span>`;
+    }
+  }
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('genStatus').textContent = 'Tamamlandı!';
+
+  setTimeout(() => {
+    renderResults();
+    const backBtn = document.getElementById('backToStep1Btn');
+    if (backBtn) backBtn.style.display = '';
+    setStep(2);
+  }, 600);
+}
+
+// ─── WordPress ────────────────────────────────────────────────
+async function publishPost(idx) {
+  const r = state.results[idx];
+  const wpUrl = document.getElementById('wpUrl').value.trim();
+  const wpUser = document.getElementById('wpUser').value.trim();
+  const wpPass = document.getElementById('wpPass').value.trim();
+
+  if (!r.scheduleDate) { alert('Lütfen tarih seçin.'); return; }
+  if (!wpUrl || !wpUser || !wpPass) { alert('WordPress bilgilerini girin.'); return; }
+
+  setCardPublishing(idx, true);
+
+  // Toplam adım sayısını hesapla
+  const translationLangs = (r.translationLangs || []).filter(s => s && s !== state.defaultLang);
+  const extraStep = state.defaultLang !== 'tr' ? 1 : 0;
+  const totalSteps = (r.imageFile ? 1 : 0) + 1 + extraStep + translationLangs.length + (translationLangs.length > 0 ? 2 : 1);
+  let step = 0;
+
+  try {
+    const token = btoa(`${wpUser}:${wpPass}`);
+    const base = wpUrl.replace(/\/$/, '');
+    const wpHeaders = { 'Content-Type': 'application/json', 'Authorization': `Basic ${token}` };
+
+    // Görsel yükle
+    let featuredMediaId = null;
+    if (r.imageFile) {
+      setProgress(idx, ++step, totalSteps, 'Görsel yükleniyor...');
+      const formData = new FormData();
+      formData.append('file', r.imageFile);
+      const mediaRes = await fetch(base + '/wp-json/wp/v2/media', {
+        method: 'POST', headers: { 'Authorization': `Basic ${token}` }, body: formData
+      });
+      if (!mediaRes.ok) {
+        const e = await mediaRes.json().catch(() => ({}));
+        throw new Error('Görsel yüklenemedi: ' + (e.message || `HTTP ${mediaRes.status}`));
+      }
+      featuredMediaId = (await mediaRes.json()).id;
+    }
+
+    const selectedDate = new Date(r.scheduleDate);
+    const isBackdate = selectedDate <= new Date();
+    const dateStr = r.scheduleDate.length === 16 ? r.scheduleDate + ':00' : r.scheduleDate;
+    const bodyBlocks = r.fullContentHtml ? htmlToWpBlocks(r.fullContentHtml) : textToWpBlocks(r.fullContent);
+    const cats = (r.categoryIds||[]).filter(id => Number.isInteger(id) && id > 0);
+    const azureKey = document.getElementById('apiKey').value.trim();
+    const isDefaultTR = state.defaultLang === 'tr';
+
+    // Varsayılan dil Türkçe değilse önce içeriği varsayılan dile çevir
+    let mainTitle = r.title;
+    let mainBodyBlocks = bodyBlocks;
+    if (!isDefaultTR) {
+      setProgress(idx, ++step, totalSteps, `İçerik ${state.defaultLang.toUpperCase()} diline çevriliyor...`);
+      const translatedMain = await translateContent(r.title, r.fullContentHtml || r.fullContent, state.defaultLang, azureKey);
+      mainTitle = translatedMain.title;
+      mainBodyBlocks = translatedMain.content ? htmlToWpBlocks(translatedMain.content) : bodyBlocks;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Ana post oluştur (varsayılan dilde)
+    setProgress(idx, ++step, totalSteps, `${state.defaultLang.toUpperCase()} post oluşturuluyor...`);
+    const primaryCat = cats.length > 0 ? cats[0] : null;
+    const body = {
+      title: mainTitle, content: mainBodyBlocks,
+      slug: seoSlug(mainTitle, state.defaultLang),
+      status: isBackdate ? 'publish' : 'future', date: dateStr, lang: state.defaultLang,
+      ...(featuredMediaId ? { featured_media: featuredMediaId } : {}),
+      ...(cats.length > 0 ? { categories: cats } : {}),
+      ...(primaryCat ? { meta: { _yoast_wpseo_primary_category: primaryCat } } : {})
+    };
+    const res = await fetch(base + '/wp-json/wp/v2/posts', {
+      method: 'POST', headers: wpHeaders, body: JSON.stringify(body)
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || `HTTP ${res.status}`); }
+    const mainPost = await res.json();
+    const mainPostId = mainPost.id;
+    state.published[idx] = mainPost.link || '#';
+
+    // Çeviriler
+    const translationIds = { [state.defaultLang]: mainPostId };
+
+    for (const langSlug of translationLangs) {
+      const langObj = state.languages.find(l => l.slug === langSlug);
+      const langName = langObj?.name || langSlug;
+      const langFlag = (langObj?.flag || '').replace(/<[^>]+>/g, '').trim();
+      setProgress(idx, ++step, totalSteps, `${langFlag ? langFlag + ' ' : ''}${langName} — çevriliyor ve yayınlanıyor...`);
+
+      // Azure rate limit için diller arasında bekleme
+      if (translationLangs.indexOf(langSlug) > 0) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+
+      // Her zaman orijinal TR içeriğinden çeviri yap
+      const translated = await translateContent(r.title, r.fullContentHtml || r.fullContent, langSlug, azureKey);
+      const tBodyBlocks = translated.content ? htmlToWpBlocks(translated.content) : textToWpBlocks(r.fullContent);
+      const tCats = cats.map(trId => {
+        const catObj = state.categories.find(c => c.id === trId);
+        return catObj?.translations?.[langSlug] || trId;
+      }).filter(id => Number.isInteger(id) && id > 0);
+      const tPrimaryCat = tCats.length > 0 ? tCats[0] : null;
+
+      const tBody = {
+        title: translated.title, content: tBodyBlocks,
+        slug: seoSlug(translated.title, langSlug),
+        status: isBackdate ? 'publish' : 'future', date: dateStr, lang: langSlug,
+        translations: { ...translationIds },
+        ...(featuredMediaId ? { featured_media: featuredMediaId } : {}),
+        ...(tCats.length > 0 ? { categories: tCats } : {}),
+        ...(tPrimaryCat ? { meta: { _yoast_wpseo_primary_category: tPrimaryCat } } : {})
+      };
+      const tRes = await fetch(base + '/wp-json/wp/v2/posts', {
+        method: 'POST', headers: wpHeaders, body: JSON.stringify(tBody)
+      });
+      if (tRes.ok) translationIds[langSlug] = (await tRes.json()).id;
+    }
+
+    // Polylang bağla + şablon tetikle (tek istekte)
+    if (Object.keys(translationIds).length > 0) {
+      setProgress(idx, ++step, totalSteps, 'Diller bağlanıyor, şablon uygulanıyor...');
+      await fetch(`${base}/wp-json/pll/v1/link`, {
+        method: 'POST', headers: wpHeaders, body: JSON.stringify({ translations: translationIds })
+      });
+    }
+
+    setProgress(idx, totalSteps, totalSteps, 'Yayınlandı! ✓', 'done');
+    delete state.pubErrors[idx];
+  } catch(err) {
+    setProgress(idx, 0, 0, '⚠ ' + err.message, 'error');
+    state.pubErrors[idx] = err.message;
+    delete state.published[idx];
+  }
+
+  setCardPublishing(idx, false);
+  updateCard(idx);
+  updateSummary();
+}
+
+async function publishAll() {
+  const ready = state.results
+    .map((r,i) => i)
+    .filter(i => state.results[i].scheduleDate && state.results[i].status !== 'error' && !state.published[i]);
+  for (const i of ready) {
+    if (state.mode === 'manual') await publishManualPost(i);
+    else await publishPost(i);
+  }
+}
+
+// ─── Render results ───────────────────────────────────────────
+function renderResults() {
+  const el = document.getElementById('resultsList');
+  el.innerHTML = state.results.map((r,i) =>
+    state.mode === 'manual' ? buildManualCard(r,i) : buildCard(r,i)
+  ).join('');
+  updateSummary();
+}
+
+function updateCard(i) {
+  const el = document.getElementById('card'+i);
+  if (!el) return;
+  el.outerHTML = state.mode === 'manual'
+    ? buildManualCard(state.results[i], i)
+    : buildCard(state.results[i], i);
+}
+
+function buildCard(r, i) {
+  if (r.status === 'error') return `
+    <div class="result-card" style="animation-delay:${i*0.04}s">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="tag tag-err">HATA</span>
+        <span style="font-size:13px;color:var(--text2)">${r.fileName}</span>
+        <span style="font-size:12px;color:var(--red)">${r.error}</span>
+      </div>
+    </div>`;
+
+  const isPub = !!state.published[i];
+  const hasErr = !!state.pubErrors[i];
+
+  return `
+    <div class="result-card ${isPub ? 'published' : ''}" id="card${i}" style="animation-delay:${i*0.04}s">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+        <span class="tag tag-ext">${r.fileName.split('.').pop().toUpperCase()}</span>
+        ${isPub ? `<span class="tag tag-ok">✓ Yayınlandı</span>` : ''}
+        ${hasErr ? `<span class="tag tag-err">Hata</span>` : ''}
+        <span style="font-size:12px;color:var(--text3)">${r.fileName}</span>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <label class="label">Başlık</label>
+        <input class="input" value="${escHtml(r.title)}" oninput="state.results[${i}].title=this.value" />
+      </div>
+
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label class="label">Kategori</label>
+          ${state.categories.length > 0
+            ? `<select class="input" onchange="setCategoryId(${i}, this.value)" style="cursor:pointer">
+                <option value="">— Seçiniz —</option>
+                ${state.categories.map(c => `<option value="${c.id}" ${(r.categoryIds||[]).includes(c.id)?'selected':''}>${escHtml(c.name)}</option>`).join('')}
+              </select>`
+            : `<div style="font-size:11px;color:var(--text3);padding:10px 0">Kategori için ayarlar adımında "Kategorileri Getir" butonuna tıklayın.</div>`
+          }
+        </div>
+        <div>
+          <label class="label">Öne Çıkarılan Görsel</label>
+          ${r.imageFile
+            ? `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <img src="${r.imagePreview}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0" />
+                <span style="font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.imageFile.name)}</span>
+                <button class="btn btn-danger btn-sm" onclick="removeImage(${i})">✕</button>
+              </div>`
+            : `<label id="imgDrop${i}" style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px dashed var(--border2);border-radius:8px;padding:10px 14px;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.2s;width:100%"
+                onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'"
+                ondragover="event.preventDefault();this.style.borderColor='var(--text)';this.style.background='var(--surface3)'"
+                ondragleave="this.style.borderColor='var(--border2)';this.style.background='var(--surface2)'"
+                ondrop="event.preventDefault();this.style.borderColor='var(--border2)';this.style.background='var(--surface2)';this.style.color='var(--text2)';setImageFromDrop(${i},event)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Görsel seç <span style="color:var(--text3)">veya sürükle bırak</span></span>
+                <input type="file" accept="image/*" style="display:none" onchange="setImage(${i},this)" />
+              </label>`
+          }
+        </div>
+      </div>
+
+      ${state.languages.length > 1 ? `
+      <div style="margin-bottom:12px">
+        <label class="label">Çevirilecek Diller <span style="color:var(--text3);font-size:10px;letter-spacing:0;text-transform:none">(Azure ile otomatik çeviri)</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+          ${state.languages.filter(l => l.slug !== state.defaultLang).map(l => `
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:var(--surface2);border:1px solid ${(r.translationLangs||[]).includes(l.slug) ? 'var(--accent)' : 'var(--border2)'};border-radius:7px;padding:6px 10px;font-size:12px;color:var(--text2);transition:border 0.2s">
+              <input type="checkbox" style="accent-color:var(--accent)" ${(r.translationLangs||[]).includes(l.slug)?'checked':''} onchange="setTranslationLang(${i},'${l.slug}',this.checked)" />
+              ${l.flag ? `<span>${l.flag}</span>` : ''} ${escHtml(l.name)}
+            </label>
+          `).join('')}
+        </div>
+      </div>` : state.languages.length === 0 ? `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text3)">Otomatik çeviri için ayarlar adımında "Dilleri Getir" butonuna tıklayın.</div>
+      </div>` : ''}
+
+      <div class="pub-progress" id="pubProgress${i}">
+        <div class="pub-progress-header">
+          <span class="pub-progress-icon" id="pubProgressIcon${i}"></span>
+          <span class="pub-progress-msg"  id="pubProgressMsg${i}">Hazırlanıyor...</span>
+          <span class="pub-progress-step" id="pubProgressStep${i}"></span>
+        </div>
+        <div class="pub-progress-track">
+          <div class="pub-progress-fill" id="pubProgressFill${i}"></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label class="label">Yayın Tarihi & Saati</label>
+          <input class="input" type="datetime-local" value="${r.scheduleDate}" oninput="state.results[${i}].scheduleDate=this.value; updatePubBtnLabel(${i}, this.value)" />
+        </div>
+        ${isPub
+          ? `<a href="${state.published[i]}" target="_blank" class="btn btn-ghost" style="text-decoration:none">Görüntüle ↗</a>`
+          : `<button class="btn btn-wp" id="pubBtn${i}" onclick="publishPost(${i})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM3.6 12c0-1.196.261-2.33.724-3.352L8.35 20.124A8.412 8.412 0 0 1 3.6 12zm8.4 8.4a8.415 8.415 0 0 1-2.393-.348l2.54-7.383 2.603 7.128a.4.4 0 0 0 .03.057A8.394 8.394 0 0 1 12 20.4zm1.16-12.32c.506-.027.963-.08.963-.08.453-.054.4-.72-.054-.693 0 0-1.362.107-2.24.107-.826 0-2.215-.107-2.215-.107-.454-.027-.508.666-.054.693 0 0 .43.053.882.08l1.31 3.588-1.84 5.517-3.06-9.105c.507-.027.96-.08.96-.08.452-.054.399-.72-.055-.693 0 0-1.36.107-2.238.107-.158 0-.344-.004-.542-.01A8.4 8.4 0 0 1 12 3.6c2.204 0 4.216.845 5.717 2.225-.036-.002-.072-.006-.11-.006-.825 0-1.41.719-1.41 1.49 0 .693.4 1.278.826 1.971.32.56.694 1.278.694 2.317 0 .72-.276 1.556-.64 2.717l-.838 2.8-3.079-9.154zm3.502 10.538-.025-.048-2.551-7.025c.422-1.078.633-1.976.633-2.757 0-.283-.019-.547-.053-.794A8.402 8.402 0 0 1 20.4 12a8.41 8.41 0 0 1-3.738 7.018z"/></svg>
+              <span id="pubLbl${i}">${r.scheduleDate && new Date(r.scheduleDate) <= new Date() ? 'Geriye Yayınla' : 'Zamanla'}</span>
+            </button>`
+        }
+      </div>
+      <div id="cardStatus${i}" style="font-size:11px;color:var(--accent);margin-top:6px;min-height:16px"></div>
+      ${hasErr ? `<div class="err-text">⚠ ${state.pubErrors[i]}</div>` : ''}
+    </div>`;
+}
+
+
+function setProgress(idx, step, total, msg, status = 'loading') {
+  const el   = document.getElementById('pubProgress'     + idx);
+  const icon = document.getElementById('pubProgressIcon' + idx);
+  const msgEl= document.getElementById('pubProgressMsg'  + idx);
+  const step_= document.getElementById('pubProgressStep' + idx);
+  const fill = document.getElementById('pubProgressFill' + idx);
+  if (!el) return;
+
+  el.style.display = 'block';
+  el.className = 'pub-progress' + (status === 'done' ? ' done' : status === 'error' ? ' error' : '');
+
+  if (icon) icon.innerHTML = status === 'loading'
+    ? `<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    : status === 'done'
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+  if (msgEl) msgEl.textContent = msg;
+  if (step_) step_.textContent = total > 0 && status === 'loading' ? `${step}/${total} adım` : '';
+  if (fill)  fill.style.width  = total > 0 ? Math.round((step / total) * 100) + '%' : (status === 'done' ? '100%' : '0%');
+}
+
+function setCardStatus(i, msg) {
+  // artık setProgress kullanıyoruz, eski çağrılar için no-op
+}
+
+function setCardPublishing(i, loading) {
+  const btn      = document.getElementById('pubBtn'      + i);
+  const progress = document.getElementById('pubProgress' + i);
+  if (btn) {
+    btn.disabled = loading;
+    const lbl = document.getElementById('pubLbl' + i);
+    if (lbl) lbl.textContent = loading ? 'Gönderiliyor' : (state.results[i]?.scheduleDate && new Date(state.results[i].scheduleDate) <= new Date() ? 'Geriye Yayınla' : 'Zamanla');
+    const svg = btn.querySelector('svg');
+    if (loading && svg) svg.classList.add('spin');
+    else if (svg) svg.classList.remove('spin');
+  }
+  if (!loading && progress) progress.style.display = 'none';
+}
+
+// ─── Manuel Mod ───────────────────────────────────────────────
+function addManualCard() {
+  const langs = state.languages.length > 0
+    ? state.languages.map(l => l.slug)
+    : ['tr'];
+  state.results.push({
+    type: 'manual',
+    langFiles: {},      // { tr: {file, title, html, text}, en: {...}, ... }
+    activeLang: langs[0] || 'tr',
+    categoryIds: [], imageFile: null, imagePreview: null, scheduleDate: '', status: 'ready'
+  });
+  renderResults();
+  updateSummary();
+}
+
+function setManualLangTab(i, slug) {
+  state.results[i].activeLang = slug;
+  updateCard(i);
+}
+
+async function setManualFile(i, slug, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const { text, html } = await extractText(file);
+  const lines = text.split('\n').filter(l => l.trim());
+  const title = lines[0]?.slice(0, 120) || file.name.replace(/\.\w+$/, '');
+  if (!state.results[i].langFiles) state.results[i].langFiles = {};
+  state.results[i].langFiles[slug] = { file, title, text, html };
+  updateCard(i);
+}
+
+function buildManualCard(r, i) {
+  const langs = state.languages.length > 0 ? state.languages : [{ slug: 'tr', name: 'Türkçe', flag: '🇹🇷' }];
+  const isPub = !!state.published[i];
+  const hasErr = !!state.pubErrors[i];
+  const active = r.activeLang || langs[0]?.slug || 'tr';
+  const lf = (r.langFiles || {})[active] || {};
+
+  const tabsHtml = langs.map(l => `
+    <div class="lang-tab-btn ${l.slug === active ? 'active' : ''}" onclick="setManualLangTab(${i},'${l.slug}')">
+      ${l.flag || ''} ${escHtml(l.name)}
+      ${(r.langFiles||{})[l.slug] ? ' ✓' : ''}
+    </div>`).join('');
+
+  const fileHtml = lf.file
+    ? `<div class="mini-drop has-file">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(lf.file.name)}</span>
+        <button class="btn btn-danger btn-sm" onclick="state.results[${i}].langFiles['${active}']=null;updateCard(${i})">✕</button>
+      </div>`
+    : `<label class="mini-drop">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        DOCX yükle
+        <input type="file" accept=".docx,.txt" style="display:none" onchange="setManualFile(${i},'${active}',this)" />
+      </label>`;
+
+  return `
+    <div class="result-card ${isPub ? 'published' : ''}" id="card${i}" style="animation-delay:${i*0.04}s">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+        <span class="tag" style="background:#e0f2fe;color:#0369a1">MANUEL</span>
+        ${isPub ? `<span class="tag tag-ok">✓ Yayınlandı</span>` : ''}
+        ${hasErr ? `<span class="tag tag-err">Hata</span>` : ''}
+        <span style="font-size:12px;color:var(--text3)">${langs.filter(l=>(r.langFiles||{})[l.slug]).map(l=>l.name).join(' · ') || 'Henüz dosya yüklenmedi'}</span>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="state.results.splice(${i},1);delete state.published[${i}];renderResults();updateSummary()">Kaldır</button>
+      </div>
+
+      <div class="lang-tabs">${tabsHtml}</div>
+
+      <div style="margin-bottom:10px">${fileHtml}</div>
+
+      ${lf.file ? `
+      <div style="margin-bottom:12px">
+        <label class="label">Başlık (${active.toUpperCase()})</label>
+        <input class="input" value="${escHtml(lf.title||'')}" oninput="state.results[${i}].langFiles['${active}'].title=this.value" />
+      </div>` : ''}
+
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label class="label">Kategori</label>
+          ${state.categories.length > 0
+            ? `<select class="input" onchange="setCategoryId(${i}, this.value)" style="cursor:pointer">
+                <option value="">— Seçiniz —</option>
+                ${state.categories.map(c => `<option value="${c.id}" ${(r.categoryIds||[]).includes(c.id)?'selected':''}>${escHtml(c.name)}</option>`).join('')}
+              </select>`
+            : `<div style="font-size:11px;color:var(--text3);padding:10px 0">Kategorileri Getir butonuna tıklayın.</div>`
+          }
+        </div>
+        <div>
+          <label class="label">Öne Çıkarılan Görsel</label>
+          ${r.imageFile
+            ? `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <img src="${r.imagePreview}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0" />
+                <span style="font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(r.imageFile.name)}</span>
+                <button class="btn btn-danger btn-sm" onclick="removeImage(${i})">✕</button>
+              </div>`
+            : `<label style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px dashed var(--border2);border-radius:8px;padding:10px 14px;cursor:pointer;font-size:12px;color:var(--text2);transition:all 0.2s;width:100%"
+                onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'"
+                ondragover="event.preventDefault();this.style.borderColor='var(--text)';this.style.background='var(--surface3)'"
+                ondragleave="this.style.borderColor='var(--border2)';this.style.background='var(--surface2)'"
+                ondrop="event.preventDefault();this.style.borderColor='var(--border2)';this.style.background='var(--surface2)';this.style.color='var(--text2)';setImageFromDrop(${i},event)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Görsel seç <span style="color:var(--text3)">veya sürükle bırak</span></span>
+                <input type="file" accept="image/*" style="display:none" onchange="setImage(${i},this)" />
+              </label>`
+          }
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label class="label">Yayın Tarihi & Saati</label>
+          <input class="input" type="datetime-local" value="${r.scheduleDate}" oninput="state.results[${i}].scheduleDate=this.value;updatePubBtnLabel(${i},this.value)" />
+        </div>
+        ${isPub
+          ? `<a href="${state.published[i]}" target="_blank" class="btn btn-ghost" style="text-decoration:none">Görüntüle ↗</a>`
+          : `<button class="btn btn-wp" id="pubBtn${i}" onclick="publishManualPost(${i})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM3.6 12c0-1.196.261-2.33.724-3.352L8.35 20.124A8.412 8.412 0 0 1 3.6 12zm8.4 8.4a8.415 8.415 0 0 1-2.393-.348l2.54-7.383 2.603 7.128a.4.4 0 0 0 .03.057A8.394 8.394 0 0 1 12 20.4zm1.16-12.32c.506-.027.963-.08.963-.08.453-.054.4-.72-.054-.693 0 0-1.362.107-2.24.107-.826 0-2.215-.107-2.215-.107-.454-.027-.508.666-.054.693 0 0 .43.053.882.08l1.31 3.588-1.84 5.517-3.06-9.105c.507-.027.96-.08.96-.08.452-.054.399-.72-.055-.693 0 0-1.36.107-2.238.107-.158 0-.344-.004-.542-.01A8.4 8.4 0 0 1 12 3.6c2.204 0 4.216.845 5.717 2.225-.036-.002-.072-.006-.11-.006-.825 0-1.41.719-1.41 1.49 0 .693.4 1.278.826 1.971.32.56.694 1.278.694 2.317 0 .72-.276 1.556-.64 2.717l-.838 2.8-3.079-9.154zm3.502 10.538-.025-.048-2.551-7.025c.422-1.078.633-1.976.633-2.757 0-.283-.019-.547-.053-.794A8.402 8.402 0 0 1 20.4 12a8.41 8.41 0 0 1-3.738 7.018z"/></svg>
+              <span id="pubLbl${i}">${r.scheduleDate && new Date(r.scheduleDate) <= new Date() ? 'Geriye Yayınla' : 'Zamanla'}</span>
+            </button>`
+        }
+      </div>
+      <div id="cardStatus${i}" style="font-size:11px;color:var(--accent);margin-top:6px;min-height:16px"></div>
+      ${hasErr ? `<div class="err-text">⚠ ${state.pubErrors[i]}</div>` : ''}
+    </div>`;
+}
+
+async function publishManualPost(idx) {
+  const r = state.results[idx];
+  if (!r.scheduleDate) { alert('Lütfen tarih seçin.'); return; }
+
+  const wpUrl = document.getElementById('wpUrl').value.trim();
+  const wpUser = document.getElementById('wpUser').value.trim();
+  const wpPass = document.getElementById('wpPass').value.trim();
+  if (!wpUrl || !wpUser || !wpPass) { alert('WordPress bilgilerini girin.'); return; }
+
+  setCardPublishing(idx, true);
+
+  try {
+    const token = btoa(`${wpUser}:${wpPass}`);
+    const base = wpUrl.replace(/\/$/, '');
+    const wpHeaders = { 'Content-Type': 'application/json', 'Authorization': `Basic ${token}` };
+
+    const selectedDate = new Date(r.scheduleDate);
+    const isBackdate = selectedDate <= new Date();
+    const dateStr = r.scheduleDate.length === 16 ? r.scheduleDate + ':00' : r.scheduleDate;
+    const cats = (r.categoryIds||[]).filter(id => Number.isInteger(id) && id > 0);
+
+    // Görsel yükleme
+    let featuredMediaId = null;
+    if (r.imageFile) {
+      const formData = new FormData();
+      formData.append('file', r.imageFile);
+      const mediaRes = await fetch(base + '/wp-json/wp/v2/media', {
+        method: 'POST', headers: { 'Authorization': `Basic ${token}` }, body: formData
+      });
+      if (mediaRes.ok) featuredMediaId = (await mediaRes.json()).id;
+    }
+
+    const langs = state.languages.length > 0 ? state.languages : [{ slug: 'tr' }];
+    const translationIds = {};
+
+    for (const langObj of langs) {
+      const slug = langObj.slug;
+      const lf = (r.langFiles || {})[slug];
+      if (!lf || !lf.file) continue;
+
+      const content = lf.html ? htmlToWpBlocks(lf.html) : textToWpBlocks(lf.text || '');
+      const tCats = cats.map(trId => {
+        const catObj = state.categories.find(c => c.id === trId);
+        return catObj?.translations?.[slug] || trId;
+      }).filter(id => Number.isInteger(id) && id > 0);
+
+      setCardStatus(idx, `"${langObj.name || slug}" yayınlanıyor...`);
+
+      const tPrimaryManual = tCats.length > 0 ? tCats[0] : null;
+
+      const body = {
+        title: lf.title || '',
+        content,
+        slug: slugify(lf.title || ''),
+        status: isBackdate ? 'publish' : 'future',
+        date: dateStr,
+        lang: slug,
+        translations: { ...translationIds },
+        ...(featuredMediaId ? { featured_media: featuredMediaId } : {}),
+        ...(tCats.length > 0 ? { categories: tCats } : {}),
+        ...(tPrimaryManual ? { meta: { _yoast_wpseo_primary_category: tPrimaryManual } } : {})
+      };
+
+      const res = await fetch(base + '/wp-json/wp/v2/posts', {
+        method: 'POST', headers: wpHeaders, body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        const post = await res.json();
+        translationIds[slug] = post.id;
+        if (slug === 'tr' || !state.published[idx]) state.published[idx] = post.link || '#';
+      }
+    }
+
+    // Polylang bağla + şablon tetikle (tek istekte)
+    if (Object.keys(translationIds).length > 0) {
+      setCardStatus(idx, 'Diller bağlanıyor, şablon uygulanıyor...');
+      await fetch(`${base}/wp-json/pll/v1/link`, {
+        method: 'POST', headers: wpHeaders,
+        body: JSON.stringify({ translations: translationIds })
+      });
+    }
+
+    setCardStatus(idx, '');
+    delete state.pubErrors[idx];
+  } catch(err) {
+    state.pubErrors[idx] = err.message;
+    delete state.published[idx];
+  }
+
+  setCardPublishing(idx, false);
+  updateCard(idx);
+  updateSummary();
+}
+
+function updateSummary() {
+  const ready = state.results.filter((r,i) => r.scheduleDate && r.status !== 'error' && !state.published[i]).length;
+  const pubCount = Object.values(state.published).filter(Boolean).length;
+  document.getElementById('readyCount').textContent = state.results.filter(r => r.status !== 'error').length;
+  const badge = document.getElementById('pubBadge');
+  badge.style.display = pubCount > 0 ? 'inline' : 'none';
+  document.getElementById('pubCount').textContent = pubCount;
+  document.getElementById('publishAllBtn').disabled = ready === 0;
+}
+
+function copyIntro(i, btn) {
+  navigator.clipboard.writeText(state.results[i].intro);
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Kopyalandı';
+  setTimeout(() => btn.innerHTML = orig, 2000);
+}
+
+// ─── Categories ───────────────────────────────────────────────
+async function fetchCategories() {
+  const wpUrl = document.getElementById('wpUrl').value.trim();
+  const wpUser = document.getElementById('wpUser').value.trim();
+  const wpPass = document.getElementById('wpPass').value.trim();
+  if (!wpUrl || !wpUser || !wpPass) { alert('Önce WordPress bilgilerini girin.'); return; }
+
+  const btn = document.getElementById('fetchCatBtn');
+  const status = document.getElementById('catStatus');
+  btn.disabled = true;
+  status.textContent = 'Yükleniyor...';
+
+  try {
+    const token = btoa(`${wpUser}:${wpPass}`);
+    const res = await fetch(wpUrl.replace(/\/$/, '') + '/wp-json/wp/v2/categories?per_page=100&lang=tr', {
+      headers: { 'Authorization': `Basic ${token}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const cats = await res.json();
+    // translations map: {tr: 5, en: 12, ru: 18, de: 22} — Polylang ekler
+    state.categories = cats.map(c => ({ id: c.id, name: c.name, translations: c.translations || {} }));
+
+    const preview = document.getElementById('catPreview');
+    preview.style.display = 'flex';
+    preview.innerHTML = state.categories.map(c =>
+      `<span class="tag tag-wp">${escHtml(c.name)}</span>`
+    ).join('');
+    status.textContent = `${state.categories.length} kategori yüklendi`;
+    status.style.color = 'var(--accent)';
+  } catch(err) {
+    status.textContent = 'Hata: ' + err.message;
+    status.style.color = 'var(--red)';
+  }
+  btn.disabled = false;
+}
+
+// ─── Image handling ───────────────────────────────────────────
+function setCategoryId(i, val) {
+  const id = parseInt(val, 10);
+  state.results[i].categoryIds = isNaN(id) ? [] : [id];
+}
+
+function setTranslationLang(i, slug, checked) {
+  const langs = state.results[i].translationLangs || [];
+  if (checked && !langs.includes(slug)) langs.push(slug);
+  if (!checked) {
+    const idx = langs.indexOf(slug);
+    if (idx > -1) langs.splice(idx, 1);
+  }
+  state.results[i].translationLangs = langs;
+}
+
+// ─── Language fetch (Polylang) ────────────────────────────────
+async function fetchLanguages() {
+  const wpUrl = document.getElementById('wpUrl').value.trim();
+  const wpUser = document.getElementById('wpUser').value.trim();
+  const wpPass = document.getElementById('wpPass').value.trim();
+  if (!wpUrl || !wpUser || !wpPass) { alert('Önce WordPress bilgilerini girin.'); return; }
+
+  const btn = document.getElementById('fetchLangBtn');
+  const status = document.getElementById('langStatus');
+  btn.disabled = true;
+  status.textContent = 'Yükleniyor...';
+
+  try {
+    const token = btoa(`${wpUser}:${wpPass}`);
+    const res = await fetch(wpUrl.replace(/\/$/, '') + '/wp-json/pll/v1/languages', {
+      headers: { 'Authorization': `Basic ${token}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} — Polylang eklentisi aktif mi?`);
+    const langs = await res.json();
+    state.languages = langs.map(l => ({ slug: l.slug, name: l.name, flag: l.flag || '' }));
+
+    // Varsayılan dili tespit et (is_default veya ilk sıradaki)
+    const defaultLang = langs.find(l => l.is_default) || langs[0];
+    if (defaultLang) {
+      state.defaultLang = defaultLang.slug;
+    }
+
+    const preview = document.getElementById('langPreview');
+    preview.style.display = 'flex';
+    preview.innerHTML = state.languages.map(l =>
+      `<span class="tag tag-wp">${l.flag ? l.flag + ' ' : ''}${escHtml(l.name)}${l.slug === state.defaultLang ? ' ★' : ''}</span>`
+    ).join('');
+    status.textContent = `${state.languages.length} dil yüklendi (varsayılan: ${state.defaultLang})`;
+    status.style.color = 'var(--accent)';
+
+    // Re-render cards to show language checkboxes
+    if (state.results.length > 0) renderResults();
+  } catch(err) {
+    status.textContent = 'Hata: ' + err.message;
+    status.style.color = 'var(--red)';
+  }
+  btn.disabled = false;
+}
+
+// ─── Translation via Groq ─────────────────────────────────────
+// ─── Azure Translator ─────────────────────────────────────────
+const AZURE_REGION = 'westeurope';
+const AZURE_ENDPOINT = 'https://api.cognitive.microsofttranslator.com/translate';
+
+// DeepL dil kodları → Azure dil kodları eşlemesi
+const LANG_MAP = {
+  tr: 'tr', en: 'en', ru: 'ru', de: 'de', fr: 'fr',
+  es: 'es', it: 'it', pl: 'pl', nl: 'nl', ar: 'ar', zh: 'zh-Hans'
+};
+
+async function translateContent(title, htmlContent, targetLangSlug, apiKey) {
+  const toLang = LANG_MAP[targetLangSlug] || targetLangSlug;
+  const fromLang = 'tr'; // İçerik her zaman Türkçe yükleniyor
+  const url = `${AZURE_ENDPOINT}?api-version=3.0&from=${fromLang}&to=${toLang}&textType=html`;
+  const headers = {
+    'Content-Type': 'application/json',
+    'Ocp-Apim-Subscription-Key': apiKey,
+    'Ocp-Apim-Subscription-Region': AZURE_REGION
+  };
+
+  // Başlık + içeriği tek istekte gönder
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify([
+      { text: title },
+      { text: htmlContent }
+    ])
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Azure HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return {
+    title:   data[0]?.translations?.[0]?.text || title,
+    content: data[1]?.translations?.[0]?.text || htmlContent
+  };
+}
+
+
+function setImage(i, input) {
+  const file = input.files[0];
+  if (!file) return;
+  state.results[i].imageFile = file;
+  state.results[i].imagePreview = URL.createObjectURL(file);
+  updateCard(i);
+}
+
+function setImageFromDrop(i, event) {
+  const file = event.dataTransfer?.files?.[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  state.results[i].imageFile = file;
+  state.results[i].imagePreview = URL.createObjectURL(file);
+  updateCard(i);
+}
+
+function removeImage(i) {
+  state.results[i].imageFile = null;
+  state.results[i].imagePreview = null;
+  updateCard(i);
+}
+
+function htmlToWpBlocks(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const blocks = [];
+
+  doc.body.childNodes.forEach(node => {
+    if (node.nodeType !== 1) return;
+    const tag = node.tagName.toLowerCase();
+    const inner = node.innerHTML.trim();
+    if (!inner) return;
+
+    if (tag === 'p') {
+      blocks.push(`<!-- wp:paragraph -->\n<p>${inner}</p>\n<!-- /wp:paragraph -->`);
+    } else if (tag === 'h1' || tag === 'h2') {
+      // H1 Word başlığı da H2 olarak gönder (post başlığı zaten H1)
+      blocks.push(`<!-- wp:heading {"level":2} -->\n<h2 class="wp-block-heading">${inner}</h2>\n<!-- /wp:heading -->`);
+    } else if (tag === 'h3') {
+      blocks.push(`<!-- wp:heading {"level":3} -->\n<h3 class="wp-block-heading">${inner}</h3>\n<!-- /wp:heading -->`);
+    } else if (tag === 'h4') {
+      blocks.push(`<!-- wp:heading {"level":4} -->\n<h4 class="wp-block-heading">${inner}</h4>\n<!-- /wp:heading -->`);
+    } else if (tag === 'ul') {
+      blocks.push(`<!-- wp:list -->\n<ul class="wp-block-list">${node.innerHTML}</ul>\n<!-- /wp:list -->`);
+    } else if (tag === 'ol') {
+      blocks.push(`<!-- wp:list {"ordered":true} -->\n<ol class="wp-block-list">${node.innerHTML}</ol>\n<!-- /wp:list -->`);
+    }
+  });
+
+  return blocks.join('\n\n');
+}
+
+function textToWpBlocks(text) {
+  return (text || '')
+    .split(/\n{2,}/)
+    .map(p => p.replace(/\n/g, ' ').trim())
+    .filter(p => p.length > 0)
+    .map(p => `<!-- wp:paragraph -->\n<p>${escHtml(p)}</p>\n<!-- /wp:paragraph -->`)
+    .join('\n\n');
+}
+
+function updatePubBtnLabel(i, val) {
+  const lbl = document.getElementById('pubLbl' + i);
+  if (!lbl) return;
+  lbl.textContent = val && new Date(val) <= new Date() ? 'Geriye Yayınla' : 'Zamanla';
+}
+
+function toggleVis(id, btn) {
+  const el = document.getElementById(id);
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'GİZLE' : 'GÖSTER';
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Slug oluşturma (Kiril/Türkçe → Latin) ─────────────────────
+const CYRILLIC_MAP = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i',
+  'й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t',
+  'у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'',
+  'э':'e','ю':'yu','я':'ya'
+};
+const TURKISH_MAP = {
+  'ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u',
+  'Ç':'c','Ğ':'g','İ':'i','Ö':'o','Ş':'s','Ü':'u'
+};
+
+function slugify(text) {
+  let s = (text || '').toLowerCase();
+  s = s.replace(/[а-яёА-ЯЁ]/g, ch => CYRILLIC_MAP[ch.toLowerCase()] ?? ch);
+  s = s.replace(/[çğıöşüÇĞİÖŞÜ]/g, ch => TURKISH_MAP[ch] ?? ch);
+  s = s
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return s.slice(0, 90);
+}
+
+const STOP_WORDS = {
+  tr: ['ve','ile','bir','bu','da','de','için','olan','en','çok','o','ne','her','hiç','ama','veya','ya','ki','bu','şu','nasıl','hangi','olan'],
+  en: ['a','an','the','and','or','but','in','on','at','to','for','of','with','by','from','is','are','was','this','that','not'],
+  ru: ['и','в','на','с','к','из','по','за','от','до','не','но','а','или','как','что','это','то'],
+  de: ['und','oder','aber','der','die','das','den','dem','des','ein','eine','mit','von','zu','bei','nach','in','an','auf','für'],
+  fr: ['le','la','les','un','une','des','et','ou','mais','de','du','au','aux','en','dans','sur','pour','par','avec']
+};
+
+function seoSlug(title, langSlug = 'tr', maxWords = 6, maxLen = 60) {
+  const stops = new Set([...(STOP_WORDS.tr || []), ...(STOP_WORDS[langSlug] || [])]);
+  const base = slugify(title);
+  const words = base.split('-').filter(w => w.length > 1 && !stops.has(w));
+  const shortened = words.slice(0, maxWords).join('-');
+  return (shortened || base).slice(0, maxLen).replace(/-$/,'');
+}
+
+</script>
+</body>
+</html>
