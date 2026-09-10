@@ -95,10 +95,10 @@ DOCX dosyanızı şu kurallara göre hazırlayın:
 | Servis | Ücretsiz Limit | Notlar |
 |---|---|---|
 | **Azure Translator** | 2M karakter/ay | Önerilen — HTML desteği mükemmel |
-| **DeepL** | 500k karakter/ay | En iyi çeviri kalitesi (kart gerekli) |  > **v2 sürümünde!**
-| **Google Gemini** | 1M TPM | Ücretsiz, yüksek limit | > **v2 sürümünde!**
-| **Groq** | 1k istek/gün | Ücretsiz ama limit düşük | > **v2 sürümünde!**
-| **OpenAI** | Ücretli | gpt-4o-mini kullanır | > **v2 sürümünde!**
+| **DeepL** | 500k karakter/ay | En iyi çeviri kalitesi (kart gerekli) > **v2 sürümünde!** |
+| **Google Gemini** | 1M TPM | Ücretsiz, yüksek limit > **v2 sürümünde!** |
+| **Groq** | 1k istek/gün | Ücretsiz ama limit düşük > **v2 sürümünde!** |
+| **OpenAI** | Ücretli | gpt-4o-mini kullanır > **v2 sürümünde!** |
 
 ---
 
