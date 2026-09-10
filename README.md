@@ -2,14 +2,14 @@
 
 WordPress tabanlı çok dilli blog içeriklerini DOCX'ten otomatik olarak yayınlayan web uygulaması. Polylang ile dil yönetimi, Azure/DeepL/Gemini/Groq/OpenAI ile otomatik çeviri destekler.
 
-(Azure dışındaki servislerin kullanımı v2 sürümünde yayınlanacaktır.)
+> **Not:** Azure dışındaki servislerin kullanımı v2 sürümünde yayınlanacaktır.
 
 ---
 
 ## Özellikler
 
 - **DOCX Yükleme** — H1 başlık, H2/H3 alt başlıklar otomatik algılanır
-- **Otomatik Çeviri** — Azure, DeepL, Gemini, Groq veya OpenAI seçilebilir
+- **Otomatik Çeviri** — Azure
 - **Manuel Yükleme** — Her dil için ayrı DOCX yüklenebilir
 - **Polylang Entegrasyonu** — Dil sürümleri otomatik birbirine bağlanır
 - **Kategori Seçimi** — Polylang'dan dil bazlı kategoriler çekilir
@@ -95,10 +95,10 @@ DOCX dosyanızı şu kurallara göre hazırlayın:
 | Servis | Ücretsiz Limit | Notlar |
 |---|---|---|
 | **Azure Translator** | 2M karakter/ay | Önerilen — HTML desteği mükemmel |
-| **DeepL** | 500k karakter/ay | En iyi çeviri kalitesi (kart gerekli) | (v2 sürümünde!)
-| **Google Gemini** | 1M TPM | Ücretsiz, yüksek limit | (v2 sürümünde!)
-| **Groq** | 1k istek/gün | Ücretsiz ama limit düşük | (v2 sürümünde!)
-| **OpenAI** | Ücretli | gpt-4o-mini kullanır | (v2 sürümünde!)
+| **DeepL** | 500k karakter/ay | En iyi çeviri kalitesi (kart gerekli) |  > **v2 sürümünde!**
+| **Google Gemini** | 1M TPM | Ücretsiz, yüksek limit | > **v2 sürümünde!**
+| **Groq** | 1k istek/gün | Ücretsiz ama limit düşük | > **v2 sürümünde!**
+| **OpenAI** | Ücretli | gpt-4o-mini kullanır | > **v2 sürümünde!**
 
 ---
 
