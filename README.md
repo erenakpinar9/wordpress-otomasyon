@@ -9,7 +9,7 @@ WordPress tabanlı çok dilli blog içeriklerini DOCX'ten otomatik olarak yayın
 ## Özellikler
 
 - **DOCX Yükleme** — H1 başlık, H2/H3 alt başlıklar otomatik algılanır
-- **Otomatik Çeviri** — Azure
+- **Otomatik Çeviri** — Azure ile otomatik çeviri
 - **Manuel Yükleme** — Her dil için ayrı DOCX yüklenebilir
 - **Polylang Entegrasyonu** — Dil sürümleri otomatik birbirine bağlanır
 - **Kategori Seçimi** — Polylang'dan dil bazlı kategoriler çekilir
