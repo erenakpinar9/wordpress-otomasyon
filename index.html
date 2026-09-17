@@ -321,6 +321,15 @@
   .welcome-mode-card.selected .wmc-feature { color:var(--text2); }
   .welcome-mode-card.selected .wmc-feature svg { stroke:var(--text); }
 
+  .svc-btn {
+    padding:6px 14px; border-radius:var(--radius);
+    border:1px solid var(--border); background:var(--surface2);
+    font-size:12px; font-weight:500; color:var(--text2);
+    cursor:pointer; transition:all .15s; font-family:inherit;
+  }
+  .svc-btn:hover { background:var(--surface3); color:var(--text); border-color:var(--border2); }
+  .svc-btn.active { background:var(--text); color:#fff; border-color:var(--text); }
+
   ::-webkit-scrollbar { width:4px; }
   ::-webkit-scrollbar-track { background:var(--bg); }
   ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:99px; }
@@ -461,15 +470,35 @@
       <div id="projectMsg" style="font-size:11px;margin-top:6px;min-height:14px"></div>
     </div>
 
-    <!-- Azure Translator Key (auto modda görünür) -->
+    <!-- Çeviri Servisi (auto modda görünür) -->
     <div class="card" id="apiKeyCard">
-      <div class="card-title">Azure Translator Anahtarı <span style="color:var(--text3);font-size:10px;letter-spacing:0">(yalnızca otomatik çeviri için)</span></div>
-      <div class="pw-wrap">
-        <input class="input" type="password" id="apiKey" placeholder="Azure Translator Key..." />
-        <button class="pw-toggle" onclick="toggleVis('apiKey',this)">GÖSTER</button>
+      <div class="card-title">Çeviri Servisi <span style="color:var(--text3);font-size:10px;letter-spacing:0">(yalnızca otomatik çeviri için)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+        <button class="svc-btn active" id="svc-azure"  onclick="selectService('azure')">Azure</button>
+        <button class="svc-btn"        id="svc-deepl"  onclick="selectService('deepl')">DeepL</button>
+        <button class="svc-btn"        id="svc-gemini" onclick="selectService('gemini')">Gemini</button>
+        <button class="svc-btn"        id="svc-groq"   onclick="selectService('groq')">Groq</button>
+        <button class="svc-btn"        id="svc-openai" onclick="selectService('openai')">OpenAI</button>
       </div>
-      <div class="info-box">
-        Çeviri kullanmıyorsanız boş bırakabilirsiniz. <a href="https://portal.azure.com" target="_blank">portal.azure.com</a> → Translator → Keys and Endpoint
+      <div id="svcFields-azure">
+        <div class="pw-wrap"><input class="input" type="password" id="apiKey" placeholder="Azure Translator Key..." /><button class="pw-toggle" onclick="toggleVis('apiKey',this)">GÖSTER</button></div>
+        <div class="info-box">2M karakter/ay ücretsiz. <a href="https://portal.azure.com" target="_blank">portal.azure.com</a> → Translator → Keys and Endpoint</div>
+      </div>
+      <div id="svcFields-deepl" style="display:none">
+        <div class="pw-wrap"><input class="input" type="password" id="deeplKey" placeholder="DeepL API Key..." /><button class="pw-toggle" onclick="toggleVis('deeplKey',this)">GÖSTER</button></div>
+        <div class="info-box">500k karakter/ay ücretsiz (kart gerekli). <a href="https://www.deepl.com/en/pro-api" target="_blank">deepl.com/en/pro-api</a></div>
+      </div>
+      <div id="svcFields-gemini" style="display:none">
+        <div class="pw-wrap"><input class="input" type="password" id="geminiKey" placeholder="Gemini API Key..." /><button class="pw-toggle" onclick="toggleVis('geminiKey',this)">GÖSTER</button></div>
+        <div class="info-box">Ücretsiz plan: 1M TPM. <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></div>
+      </div>
+      <div id="svcFields-groq" style="display:none">
+        <div class="pw-wrap"><input class="input" type="password" id="groqKey" placeholder="Groq API Key..." /><button class="pw-toggle" onclick="toggleVis('groqKey',this)">GÖSTER</button></div>
+        <div class="info-box">Ücretsiz plan: 1k istek/gün. <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></div>
+      </div>
+      <div id="svcFields-openai" style="display:none">
+        <div class="pw-wrap"><input class="input" type="password" id="openaiKey" placeholder="OpenAI API Key..." /><button class="pw-toggle" onclick="toggleVis('openaiKey',this)">GÖSTER</button></div>
+        <div class="info-box">Ücretli (gpt-4o-mini). <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></div>
       </div>
     </div>
 
@@ -619,11 +648,31 @@ const state = {
   categories: [],
   languages: [],
   defaultLang: 'tr',
-  mode: 'auto'  // 'auto' | 'manual'
+  translationService: 'azure',
+  mode: 'auto'
 };
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── Çeviri Servisi ───────────────────────────────────────────
+const SERVICES = ['azure','deepl','gemini','groq','openai'];
+const SERVICE_KEY_IDS = { azure:'apiKey', deepl:'deeplKey', gemini:'geminiKey', groq:'groqKey', openai:'openaiKey' };
+
+function selectService(svc) {
+  state.translationService = svc;
+  SERVICES.forEach(s => {
+    const btn    = document.getElementById('svc-'+s);
+    const fields = document.getElementById('svcFields-'+s);
+    if (btn)    btn.classList.toggle('active', s === svc);
+    if (fields) fields.style.display = s === svc ? '' : 'none';
+  });
+}
+
+function getTranslationKey() {
+  const keyId = SERVICE_KEY_IDS[state.translationService] || 'apiKey';
+  return (document.getElementById(keyId)?.value || '').trim();
+}
 
 // ─── Step navigation ─────────────────────────────────────────
 function setStep(n) {
@@ -684,20 +733,33 @@ function loadProject(id) {
   if (!id) { document.getElementById('deleteProjectBtn').style.display = 'none'; return; }
   const p = loadProjects().find(x => x.id === id);
   if (!p) return;
-  document.getElementById('apiKey').value = p.apiKey || '';
+  document.getElementById('apiKey').value    = p.apiKey    || '';
+  if (document.getElementById('deeplKey'))  document.getElementById('deeplKey').value  = p.deeplKey  || '';
+  if (document.getElementById('geminiKey')) document.getElementById('geminiKey').value = p.geminiKey || '';
+  if (document.getElementById('groqKey'))   document.getElementById('groqKey').value   = p.groqKey   || '';
+  if (document.getElementById('openaiKey')) document.getElementById('openaiKey').value = p.openaiKey || '';
   document.getElementById('wpUrl').value  = p.wpUrl  || '';
   document.getElementById('wpUser').value = p.wpUser || '';
   document.getElementById('wpPass').value = p.wpPass || '';
+  if (p.translationService) selectService(p.translationService);
   document.getElementById('deleteProjectBtn').style.display = '';
   showProjectMsg(`"${p.name}" yüklendi ✓`, 'var(--accent)');
 }
 
 function saveProject() {
-  const apiKey = document.getElementById('apiKey').value.trim();
   const wpUrl  = document.getElementById('wpUrl').value.trim();
   const wpUser = document.getElementById('wpUser').value.trim();
   const wpPass = document.getElementById('wpPass').value.trim();
   if (!wpUrl) { showProjectMsg('Site URL boş olamaz', 'var(--red)'); return; }
+
+  const keys = {
+    apiKey:             document.getElementById('apiKey')?.value.trim()    || '',
+    deeplKey:           document.getElementById('deeplKey')?.value.trim()  || '',
+    geminiKey:          document.getElementById('geminiKey')?.value.trim() || '',
+    groqKey:            document.getElementById('groqKey')?.value.trim()   || '',
+    openaiKey:          document.getElementById('openaiKey')?.value.trim() || '',
+    translationService: state.translationService
+  };
 
   const sel = document.getElementById('projectSelect');
   const existingId = sel.value;
@@ -705,7 +767,7 @@ function saveProject() {
 
   if (existingId) {
     const p = projects.find(x => x.id === existingId);
-    if (p) { p.apiKey = apiKey; p.wpUrl = wpUrl; p.wpUser = wpUser; p.wpPass = wpPass; }
+    if (p) Object.assign(p, { wpUrl, wpUser, wpPass, ...keys });
     saveProjects(projects);
     renderProjectSelect(existingId);
     showProjectMsg('Proje güncellendi ✓', 'var(--accent)');
@@ -713,7 +775,7 @@ function saveProject() {
     const name = prompt('Proje adı:');
     if (!name) return;
     const id = 'proj_' + Date.now();
-    projects.push({ id, name, apiKey, wpUrl, wpUser, wpPass });
+    projects.push({ id, name, wpUrl, wpUser, wpPass, ...keys });
     saveProjects(projects);
     renderProjectSelect(id);
     showProjectMsg(`"${name}" kaydedildi ✓`, 'var(--accent)');
@@ -814,6 +876,11 @@ function goBack2() {
 
   // Form alanlarını sıfırla
   document.getElementById('apiKey').value = '';
+  ['deeplKey','geminiKey','groqKey','openaiKey'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  selectService('azure');
   document.getElementById('wpUrl').value = '';
   document.getElementById('wpUser').value = '';
   document.getElementById('wpPass').value = '';
@@ -1032,7 +1099,6 @@ async function publishPost(idx) {
     const dateStr = r.scheduleDate.length === 16 ? r.scheduleDate + ':00' : r.scheduleDate;
     const bodyBlocks = r.fullContentHtml ? htmlToWpBlocks(r.fullContentHtml) : textToWpBlocks(r.fullContent);
     const cats = (r.categoryIds||[]).filter(id => Number.isInteger(id) && id > 0);
-    const azureKey = document.getElementById('apiKey').value.trim();
     const isDefaultTR = state.defaultLang === 'tr';
 
     // Varsayılan dil Türkçe değilse önce içeriği varsayılan dile çevir
@@ -1040,7 +1106,7 @@ async function publishPost(idx) {
     let mainBodyBlocks = bodyBlocks;
     if (!isDefaultTR) {
       setProgress(idx, ++step, totalSteps, `İçerik ${state.defaultLang.toUpperCase()} diline çevriliyor...`);
-      const translatedMain = await translateContent(r.title, r.fullContentHtml || r.fullContent, state.defaultLang, azureKey);
+      const translatedMain = await translateContent(r.title, r.fullContentHtml || r.fullContent, state.defaultLang);
       mainTitle = translatedMain.title;
       mainBodyBlocks = translatedMain.content ? htmlToWpBlocks(translatedMain.content) : bodyBlocks;
       await new Promise(r => setTimeout(r, 2000));
@@ -1080,7 +1146,7 @@ async function publishPost(idx) {
       }
 
       // Her zaman orijinal TR içeriğinden çeviri yap
-      const translated = await translateContent(r.title, r.fullContentHtml || r.fullContent, langSlug, azureKey);
+      const translated = await translateContent(r.title, r.fullContentHtml || r.fullContent, langSlug);
       const tBodyBlocks = translated.content ? htmlToWpBlocks(translated.content) : textToWpBlocks(r.fullContent);
       const tCats = cats.map(trId => {
         const catObj = state.categories.find(c => c.id === trId);
@@ -1630,46 +1696,123 @@ async function fetchLanguages() {
 }
 
 // ─── Translation via Groq ─────────────────────────────────────
-// ─── Azure Translator ─────────────────────────────────────────
-const AZURE_REGION = 'westeurope';
+// ─── Çeviri Router ────────────────────────────────────────────
+async function translateContent(title, htmlContent, targetLangSlug) {
+  const key = getTranslationKey();
+  switch (state.translationService) {
+    case 'deepl':  return await translateWithDeepl(title, htmlContent, targetLangSlug, key);
+    case 'gemini': return await translateWithGemini(title, htmlContent, targetLangSlug, key);
+    case 'groq':   return await translateWithGroq(title, htmlContent, targetLangSlug, key);
+    case 'openai': return await translateWithOpenAI(title, htmlContent, targetLangSlug, key);
+    default:       return await translateWithAzure(title, htmlContent, targetLangSlug, key);
+  }
+}
+
+// ─── Azure ────────────────────────────────────────────────────
+const AZURE_REGION   = 'westeurope';
 const AZURE_ENDPOINT = 'https://api.cognitive.microsofttranslator.com/translate';
+const LANG_MAP = { tr:'tr', en:'en', ru:'ru', de:'de', fr:'fr', es:'es', it:'it', pl:'pl', nl:'nl', ar:'ar', zh:'zh-Hans' };
 
-// DeepL dil kodları → Azure dil kodları eşlemesi
-const LANG_MAP = {
-  tr: 'tr', en: 'en', ru: 'ru', de: 'de', fr: 'fr',
-  es: 'es', it: 'it', pl: 'pl', nl: 'nl', ar: 'ar', zh: 'zh-Hans'
-};
-
-async function translateContent(title, htmlContent, targetLangSlug, apiKey) {
+async function translateWithAzure(title, htmlContent, targetLangSlug, apiKey) {
   const toLang = LANG_MAP[targetLangSlug] || targetLangSlug;
-  const fromLang = 'tr'; // İçerik her zaman Türkçe yükleniyor
-  const url = `${AZURE_ENDPOINT}?api-version=3.0&from=${fromLang}&to=${toLang}&textType=html`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'Ocp-Apim-Subscription-Key': apiKey,
-    'Ocp-Apim-Subscription-Region': AZURE_REGION
-  };
-
-  // Başlık + içeriği tek istekte gönder
+  const url = `${AZURE_ENDPOINT}?api-version=3.0&from=tr&to=${toLang}&textType=html`;
   const res = await fetch(url, {
     method: 'POST',
-    headers,
-    body: JSON.stringify([
-      { text: title },
-      { text: htmlContent }
-    ])
+    headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': apiKey, 'Ocp-Apim-Subscription-Region': AZURE_REGION },
+    body: JSON.stringify([{ text: title }, { text: htmlContent }])
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Azure HTTP ${res.status}`);
-  }
-
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e?.error?.message || `Azure HTTP ${res.status}`); }
   const data = await res.json();
-  return {
-    title:   data[0]?.translations?.[0]?.text || title,
-    content: data[1]?.translations?.[0]?.text || htmlContent
+  return { title: data[0]?.translations?.[0]?.text || title, content: data[1]?.translations?.[0]?.text || htmlContent };
+}
+
+// ─── DeepL ────────────────────────────────────────────────────
+const DEEPL_LANG_MAP = { tr:'TR', en:'EN', ru:'RU', de:'DE', fr:'FR', es:'ES', it:'IT', pl:'PL', nl:'NL', ar:'AR', zh:'ZH' };
+
+async function translateWithDeepl(title, htmlContent, targetLangSlug, apiKey) {
+  const toLang   = DEEPL_LANG_MAP[targetLangSlug] || targetLangSlug.toUpperCase();
+  const endpoint = apiKey.endsWith(':fx') ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
+  const translateOne = async (text) => {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Authorization': `DeepL-Auth-Key ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: [text], source_lang: 'TR', target_lang: toLang, tag_handling: 'html' })
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e?.message || `DeepL HTTP ${res.status}`); }
+    return (await res.json()).translations?.[0]?.text || text;
   };
+  const [t, c] = await Promise.all([translateOne(title), translateOne(htmlContent)]);
+  return { title: t, content: c };
+}
+
+// ─── Gemini ───────────────────────────────────────────────────
+const GEMINI_LANGS = { tr:'Turkish', en:'English', ru:'Russian', de:'German', fr:'French', es:'Spanish', it:'Italian', pl:'Polish', nl:'Dutch', ar:'Arabic', zh:'Chinese' };
+
+async function translateWithGemini(title, htmlContent, targetLangSlug, apiKey) {
+  const lang = GEMINI_LANGS[targetLangSlug] || targetLangSlug;
+  const call = async (text, isHtml) => {
+    const prompt = isHtml
+      ? `Translate the following HTML from Turkish to ${lang}. Preserve all HTML tags exactly. Return ONLY the translated HTML:\n\n${text}`
+      : `Translate from Turkish to ${lang}. Return ONLY the translated title:\n\n${text}`;
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e?.error?.message || `Gemini HTTP ${res.status}`); }
+    return (await res.json()).candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
+  };
+  const t = await call(title, false);
+  await new Promise(r => setTimeout(r, 500));
+  const c = await call(htmlContent, true);
+  return { title: t, content: c };
+}
+
+// ─── Groq ─────────────────────────────────────────────────────
+async function translateWithGroq(title, htmlContent, targetLangSlug, apiKey) {
+  const lang = GEMINI_LANGS[targetLangSlug] || targetLangSlug;
+  const call = async (text, isHtml) => {
+    const sys = isHtml
+      ? `Translate from Turkish to ${lang}. Preserve all HTML tags exactly. Return ONLY the translated HTML.`
+      : `Translate from Turkish to ${lang}. Return ONLY the translated title.`;
+    const doCall = async () => fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 4000, messages: [{ role:'system', content: sys }, { role:'user', content: text }] })
+    });
+    let res = await doCall();
+    if (res.status === 429) {
+      const e = await res.json().catch(()=>({}));
+      const w = (e?.error?.message||'').match(/try again in ([0-9.]+)s/i);
+      await new Promise(r => setTimeout(r, (w ? Math.ceil(parseFloat(w[1]))+2 : 15)*1000));
+      res = await doCall();
+    }
+    const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
+    return d.choices?.[0]?.message?.content?.trim() || text;
+  };
+  const t = await call(title, false);
+  await new Promise(r => setTimeout(r, 800));
+  const c = await call(htmlContent, true);
+  return { title: t, content: c };
+}
+
+// ─── OpenAI ───────────────────────────────────────────────────
+async function translateWithOpenAI(title, htmlContent, targetLangSlug, apiKey) {
+  const lang = GEMINI_LANGS[targetLangSlug] || targetLangSlug;
+  const call = async (text, isHtml) => {
+    const sys = isHtml
+      ? `Translate from Turkish to ${lang}. Preserve all HTML tags exactly. Return ONLY the translated HTML.`
+      : `Translate from Turkish to ${lang}. Return ONLY the translated title.`;
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 4000, messages: [{ role:'system', content: sys }, { role:'user', content: text }] })
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e?.error?.message || `OpenAI HTTP ${res.status}`); }
+    return (await res.json()).choices?.[0]?.message?.content?.trim() || text;
+  };
+  const t = await call(title, false);
+  await new Promise(r => setTimeout(r, 300));
+  const c = await call(htmlContent, true);
+  return { title: t, content: c };
 }
 
 
