@@ -1,4 +1,4 @@
-# WordPress Blog Otomasyonu — v2
+# WordPress Blog Otomasyonu - v2
 
 WordPress tabanlı çok dilli blog içeriklerini DOCX'ten otomatik yayınlayan web uygulaması.
 
@@ -6,27 +6,27 @@ WordPress tabanlı çok dilli blog içeriklerini DOCX'ten otomatik yayınlayan w
 
 ## v2'deki Yenilikler
 
-- **5 Çeviri Servisi** — Azure, DeepL, Gemini, Groq, OpenAI arasından seçim
-- **Karşılama Ekranı** — Mod seçimi için yeni başlangıç ekranı
-- **Gelişmiş Proje Profilleri** — Tüm servis API key'leri profille birlikte kaydedilir
-- **SEO Slug** — Kiril dahil tüm dillerde otomatik temiz URL
-- **Yoast SEO** — Primary category otomatik set edilir
-- **Varsayılan Dil Algılama** — Polylang'dan default dil çekilir, içerik her zaman Türkçe yüklenir
-- **Adım Geri** — Tüm adımlarda önceki ekrana dönülebilir
-- **ElevenLabs Stili UI** — Yeniden tasarlanmış açık tema arayüz
+- **5 Çeviri Servisi** - Azure, DeepL, Gemini, Groq, OpenAI arasından seçim
+- **Karşılama Ekranı** - Mod seçimi için yeni başlangıç ekranı
+- **Gelişmiş Proje Profilleri** - Tüm servis API key'leri profille birlikte kaydedilir
+- **SEO Slug** - Kiril dahil tüm dillerde otomatik temiz URL
+- **Yoast SEO** - Primary category otomatik set edilir
+- **Varsayılan Dil Algılama** - Polylang'dan default dil çekilir, içerik her zaman Türkçe yüklenir
+- **Adım Geri** - Tüm adımlarda önceki ekrana dönülebilir
+- **UI** - Yeniden tasarlanmış açık tema arayüz
 
 ---
 
 ## Özellikler
 
-- DOCX yükleme — H1 başlık, H2/H3 alt başlıklar otomatik algılanır
-- Otomatik çeviri — 5 farklı servis seçeneği
-- Manuel yükleme — Her dil için ayrı DOCX yüklenebilir
-- Polylang entegrasyonu — Dil sürümleri otomatik bağlanır
-- Kategori seçimi — Polylang'dan dil bazlı kategoriler çekilir
-- Öne çıkarılan görsel — Medya kütüphanesine otomatik yüklenir, sürükle-bırak destekli
-- Geriye dönük yayın — Geçmiş tarihli içerik yayınlama
-- İlerleme göstergesi — Yayın adımları canlı takip
+- DOCX yükleme - H1 başlık, H2/H3 alt başlıklar otomatik algılanır
+- Otomatik çeviri - 5 farklı servis seçeneği
+- Manuel yükleme - Her dil için ayrı DOCX yüklenebilir
+- Polylang entegrasyonu - Dil sürümleri otomatik bağlanır
+- Kategori seçimi - Polylang'dan dil bazlı kategoriler çekilir
+- Öne çıkarılan görsel - Medya kütüphanesine otomatik yüklenir, sürükle-bırak destekli
+- Geriye dönük yayın - Geçmiş tarihli içerik yayınlama
+- İlerleme göstergesi - Yayın adımları canlı takip
 
 ---
 
@@ -134,15 +134,4 @@ Tek postu şablon düzeltmesi için yeniden kaydeder.
 
 ---
 
-## Repo Yapısı
-
-```
-wordpress-blog-otomasyonu/
-  index.html                  ← Ana uygulama
-  polylang-rest-link.zip      ← WordPress eklentisi
-  README.md
-```
-
----
-
-**Geliştiren:** Crea Cosmic Tech
+**Geliştiren:** Eren Akpınar
